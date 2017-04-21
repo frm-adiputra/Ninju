@@ -42,4 +42,5 @@ for v in arr:
     c = n.files(a, b).union_data(tmp(v[1]))
     unions.append(c)
 
+n.default('xxx', n.files('a.txt'))
 n.generate()

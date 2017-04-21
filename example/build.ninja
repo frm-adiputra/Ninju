@@ -68,3 +68,5 @@ build ${builddir}/.ninju_10.tmp: convert_data_panitia $
 build ${root}/tmp/csv_ref_jurusan.csv: union_data ${builddir}/.ninju_9.tmp $
     ${builddir}/.ninju_10.tmp
 
+default xxx a.txt
+

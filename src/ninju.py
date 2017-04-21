@@ -173,6 +173,19 @@ class _NPhony(object):
         writer.build(self.name, 'phony', inputs=ins)
 
 
+class _NDefault(object):
+    def __init__(self, targets):
+        super(_NDefault, self).__init__()
+        self.targets = targets
+
+    def write(self, writer):
+        targs = []
+        for o in self.targets:
+            targs.append(str(o))
+
+        writer.default(targs)
+
+
 class _Target(object):
     def __init__(self, ninju, target):
         super(_Target, self).__init__()
@@ -193,6 +206,18 @@ class _Target(object):
     def phony(self, inputs):
         self._n._seq.append(_NPhony(self.target, self._n.files(inputs)))
 
+    def __repr__(self):
+        return self.target.__repr__()
+
+    def __str__(self):
+        return self.target.__str__()
+
+    def __bytes__(self):
+        return self.target.__bytes__()
+
+    def __format__(self, format_spec):
+        return self.target.__format__(format_spec)
+
 
 class _Files(object):
     def __init__(self, ninju, *files):
@@ -202,6 +227,8 @@ class _Files(object):
         for f in files:
             if type(f) == _Files:
                 self.files.extend(f.files)
+            elif type(f) == _Target:
+                self.files.append(f.target)
             elif isinstance(f, list):
                 self.files.extend(f)
             elif isinstance(f, tuple):
@@ -335,6 +362,10 @@ class Ninju(object):
 
     def target(self, target):
         return _Target(self, target)
+
+    def default(self, *targets):
+        v = _NDefault(self.files(*targets))
+        self._seq.append(v)
 
     def _generate(self, output, newline=True):
         writer = ninja_syntax.Writer(output)

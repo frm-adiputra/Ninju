@@ -60,6 +60,21 @@ rule cmd1
   command = bin1 ${in} ${out}
   pool = console
 build target: cmd1
+""",
+
+    # 6
+    HEADER + """
+rule cmd1
+  command = bin1 ${in} ${out}
+build ${root}/file2.txt: cmd1 ${root}/file1.txt
+build ${builddir}/.ninju_1.tmp ${builddir}/.ninju_2.tmp: cmd1 $
+    ${root}/file3.txt
+build one: phony ${root}/file2.txt
+build all: phony ${root}/file2.txt ${builddir}/.ninju_1.tmp $
+    ${builddir}/.ninju_2.tmp
+default one
+default all ${root}/file2.txt ${builddir}/.ninju_1.tmp $
+    ${builddir}/.ninju_2.tmp
 """
 ]
 
@@ -118,3 +133,16 @@ class TestCore(unittest.TestCase):
         n.target('target').cmd1()
         result = generate_ninja(n, newline=False)
         self.assertEqual(result, expected[5])
+
+    def test_default(self):
+        n = Ninju()
+        root = n.dir()
+        n.cmd('cmd1', 'bin1 ${in} ${out}')
+        a = root('file1.txt').cmd1(root('file2.txt'))
+        b = root('file3.txt').cmd1(outputs=2)
+        n.target('one').phony(a)
+        n.target('all').phony(n.files(a, b))
+        n.default('one')
+        n.default('all', a, b)
+        result = generate_ninja(n, newline=False)
+        self.assertEqual(result, expected[6])
