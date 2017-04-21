@@ -8,7 +8,7 @@ from helper import generate_ninja, HEADER
 sourcedir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(sourcedir, '../src'))
 
-from ninju import Ninju
+from ninju import Ninju, ConfigurationError
 
 expected = [
     # 0
@@ -75,6 +75,23 @@ build all: phony ${root}/file2.txt ${builddir}/.ninju_1.tmp $
 default one
 default all ${root}/file2.txt ${builddir}/.ninju_1.tmp $
     ${builddir}/.ninju_2.tmp
+""",
+
+    # 7
+    HEADER + """
+pool pool_1
+  depth = 1
+rule cmd1
+  command = bin1
+  pool = pool_1
+pool pool_3
+  depth = 3
+rule cmd2
+  command = bin2
+  pool = pool_3
+rule cmd3
+  command = bin3
+  pool = console
 """
 ]
 
@@ -146,3 +163,23 @@ class TestCore(unittest.TestCase):
         n.default('all', a, b)
         result = generate_ninja(n, newline=False)
         self.assertEqual(result, expected[6])
+
+    def test_pool(self):
+        n = Ninju()
+        n.cmd('cmd1', 'bin1', pool=1)
+        n.cmd('cmd2', 'bin2', pool=3)
+        n.cmd('cmd3', 'bin3', pool='console')
+        result = generate_ninja(n, newline=False)
+        self.assertEqual(result, expected[7])
+
+    def test_pool_exception1(self):
+        n = Ninju()
+        
+        with self.assertRaises(ConfigurationError):
+            n.cmd('cmd1', 'bin1', pool=0)
+
+        with self.assertRaises(ConfigurationError):
+            n.cmd('cmd1', 'bin1', pool='1')
+
+        with self.assertRaises(ConfigurationError):
+            n.cmd('cmd1', 'bin1', pool='pool_1')

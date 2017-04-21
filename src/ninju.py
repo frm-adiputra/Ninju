@@ -277,6 +277,7 @@ class Ninju(object):
         self._name_count = 0
         self._cmds = {}
         self._exec_cmds = {}
+        self._pools = {}
 
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
@@ -323,13 +324,14 @@ class Ninju(object):
     def cmd(self, name, command, description=None, depfile=None,
             generator=False, pool=None, restat=False, rspfile=None,
             rspfile_content=None, deps=None):
+        pool_name = self._setup_pool(pool)
         v = _NBuildRule(
             name,
             command,
             description=description,
             depfile=depfile,
             generator=generator,
-            pool=pool,
+            pool=pool_name,
             restat=restat,
             rspfile=rspfile,
             rspfile_content=rspfile_content,
@@ -366,6 +368,24 @@ class Ninju(object):
     def default(self, *targets):
         v = _NDefault(self.files(*targets))
         self._seq.append(v)
+
+    def _setup_pool(self, pool):
+        if pool == None:
+            return None
+
+        if isinstance(pool, int):
+            if pool < 1:
+                raise ConfigurationError('pool must be an integer greater than 1 or \'console\'')
+            pool_name = 'pool_{}'.format(pool)
+            if not (pool_name in self._pools):
+                self._seq.append(_NPool(pool_name, pool))
+                self._pools[pool_name] = True
+            return pool_name
+
+        if pool == 'console':
+            return pool
+
+        raise ConfigurationError('pool must be an integer greater than 1 or \'console\'')
 
     def _generate(self, output, newline=True):
         writer = ninja_syntax.Writer(output)
