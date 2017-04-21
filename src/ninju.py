@@ -190,8 +190,8 @@ class _Target(object):
         else:
             raise AttributeError
 
-    def phony(self):
-        pass
+    def phony(self, inputs):
+        self._n._seq.append(_NPhony(self.target, self._n.files(inputs)))
 
 
 class _Files(object):
@@ -208,7 +208,6 @@ class _Files(object):
                 self.files.extend(f)
             else:
                 self.files.append(f)
-
 
     def __getattr__(self, name):
         if name in self._n._cmds:
@@ -321,9 +320,6 @@ class Ninju(object):
             rspfile_content=rspfile_content)
         self._seq.append(v)
         self._exec_cmds[name] = v.exec_fn(self)
-
-    def phony(self, name, inputs):
-        self._seq.append(_NPhony(name, inputs))
 
     def _gen_name(self, ext='tmp'):
         self._name_count += 1

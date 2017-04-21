@@ -21,6 +21,8 @@ rule mycmd
 
 build xxx: mycmd
 
+build yyy: phony a.txt
+
 build ${builddir}/.ninju_1.tmp: convert_data_panitia $
     ${root}/data/DataPendaftaran/Data_Sekolah.csv
 

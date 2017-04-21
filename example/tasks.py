@@ -23,8 +23,9 @@ n.cmd('union_data',
       description='Combine data ${in}'
       )
 
-x = n.exec_cmd('mycmd', 'cmd ${in}')
-x('xxx')
+n.exec_cmd('mycmd', 'cmd ${in}')
+n.target('xxx').mycmd()
+n.target('yyy').phony(n.files('a.txt'))
 
 arr = [
     ('Data_Sekolah.csv', 'csv_sekolah.csv'),

@@ -106,8 +106,8 @@ class TestCore(unittest.TestCase):
         n.cmd('cmd1', 'bin1 ${in} ${out}')
         a = root('file1.txt').cmd1(root('file2.txt'))
         b = root('file3.txt').cmd1(outputs=2)
-        n.phony('one', a)
-        n.phony('all', n.files(a, b))
+        n.target('one').phony(a)
+        n.target('all').phony(n.files(a, b))
         result = generate_ninja(n, newline=False)
         self.assertEqual(result, expected[4])
 
