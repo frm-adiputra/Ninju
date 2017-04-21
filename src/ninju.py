@@ -56,7 +56,7 @@ class _NRule(object):
         _self = self
         def fn(inputs, outputs=None, implicit=None, order_only=None,
                 variables=None, implicit_outputs=None):
-            outs = _normalize_outputs(outputs, ninju._gen_name, 'build')
+            outs = _normalize_outputs(outputs, ninju._gen_name)
             b = _NBuild(
                     outs,
                     _self.name,
@@ -66,7 +66,7 @@ class _NRule(object):
                     variables=variables,
                     implicit_outputs=implicit_outputs)
             ninju._seq.append(b)
-            return O(outs, ninju)
+            return _Files(ninju, *outs)
         return fn
 
 class _NBuild(object):
@@ -82,11 +82,11 @@ class _NBuild(object):
 
     def write(self, writer):
         outs = []
-        for o in as_list(self.outputs):
+        for o in self.outputs:
             outs.append(str(o))
 
         ins = []
-        for o in as_list(self.inputs):
+        for o in self.inputs:
             ins.append(str(o))
 
         writer.build(
@@ -98,17 +98,27 @@ class _NBuild(object):
             variables=self.variables,
             implicit_outputs=self.implicit_outputs)
 
-class O(object):
+class _Files(object):
 
-    def __init__(self, paths, ninju):
-        super(O, self).__init__()
-        self.paths = paths
+    def __init__(self, ninju, *files):
+        super(_Files, self).__init__()
+        self.files = []
+        for f in files:
+            if type(f) == _Files:
+                self.files.extend(f.files)
+            elif isinstance(f, list):
+                self.files.extend(f)
+            elif isinstance(f, tuple):
+                self.files.extend(f)
+            else:
+                self.files.append(f)
+
         self._n = ninju
 
     def __getattr__(self, name):
         if name in self._n._commands:
             cmd = self._n._commands[name]
-            p = self.paths
+            p = self.files
             def fn(outputs=None, implicit=None, order_only=None,
                     variables=None, implicit_outputs=None):
                 return cmd(p, outputs=outputs, implicit=implicit, order_only=order_only,
@@ -118,16 +128,22 @@ class O(object):
             raise AttributeError
 
     def __repr__(self):
-        return self.paths.__repr__()
+        return self.files.__repr__()
 
     def __str__(self):
-        return self.paths.__str__()
+        return self.files.__str__()
 
     def __bytes__(self):
-        return self.paths.__bytes__()
+        return self.files.__bytes__()
 
     def __format__(self, format_spec):
-        return self.paths.__format__(format_spec)
+        return self.files.__format__(format_spec)
+
+    def __iter__(self):
+        return self.files.__iter__()
+
+    def __next__(self):
+        return self.files.__next__()
 
 class Ninju(object):
 
@@ -164,11 +180,14 @@ class Ninju(object):
 
         _self = self
         def dirfn(*args):
-            return O(os.path.join(p, *args), _self)
+            return _Files(_self, os.path.join(p, *args))
         return dirfn
 
-    def root(self):
-        return self.dir()
+    def root(self, *args):
+        return _Files(self, os.path.join('${root}', *args))
+
+    def builddir(self, *args):
+        return _Files(self, os.path.join('${builddir}', *args))
 
     def var(self, key, value):
         v = _NVar(key, value)
@@ -192,17 +211,20 @@ class Ninju(object):
         self._seq.append(v)
         self._commands[name] = v.build_fn(self)
 
-    def execute(self):
+    def exec_cmd(self):
         pass
 
-    def _gen_name(self, suffix):
+    def _gen_name(self, ext='tmp'):
         self._name_count += 1
-        return 'ninju_{suffix}_{index}'.format(suffix=suffix, index=self._name_count)
+        return '${builddir}' + ('/.ninju_{index}.{ext}'.format(ext=ext, index=self._name_count))
 
     def generate(self, newline=True):
         output = open(os.path.join(self._root_dir, self._build_file), 'w')
         w = self._generate(output, newline)
         w.close()
+
+    def files(self, *args):
+        return _Files(self, *args)
 
     def _generate(self, output, newline=True):
         writer = ninja_syntax.Writer(output)
@@ -212,13 +234,17 @@ class Ninju(object):
                 writer.newline()
         return writer
 
-def _normalize_outputs(outputs, gen_name, suffix):
+def _normalize_outputs(outputs, gen_name, ext='tmp'):
     if not outputs:
-        return [gen_name(suffix)]
+        return [gen_name(ext)]
     elif isinstance(outputs, int):
         outs = []
         for i in range(outputs):
-            outs.append(gen_name(suffix))
+            outs.append(gen_name(ext))
         return outs
+    elif type(outputs) == _Files:
+        return outputs.files
+    elif isinstance(outputs, list):
+        return outputs
     else:
         return as_list(outputs)
