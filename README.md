@@ -15,9 +15,9 @@ Example:
 ```python
 n = Ninju()
 src = n.dir('src')
-n.cmd('cmd1', 'bin1 ${in} ${out}')
-n.cmd('cmd2', 'bin2 ${in} ${out}')
-n.cmd('cmd3', 'bin3 ${in} ${out}')
+n.cmd('cmd1', 'bin1', '${in} ${out}')
+n.cmd('cmd2', 'bin2', '${in} ${out}')
+n.cmd('cmd3', 'bin3', '${in} ${out}')
 
 # Specify the input and output
 input = src('a.txt')
@@ -32,9 +32,9 @@ input.cmd1().cmd2().cmd3(output)
 ```python
 n = Ninju()
 src = n.dir('src')
-n.cmd('cmd1', 'bin1 ${in} ${out}')
-n.cmd('cmd2', 'bin2 ${in} ${out}')
-n.cmd('cmd3', 'bin3 ${in} ${out}')
+n.cmd('cmd1', 'bin1', '${in} ${out}')
+n.cmd('cmd2', 'bin2', '${in} ${out}')
+n.cmd('cmd3', 'bin3', '${in} ${out}')
 
 a = src('a.txt')
 
@@ -50,9 +50,9 @@ c = b.cmd2()
 ```python
 n = Ninju()
 src = n.dir('src')
-n.cmd('cmd1', 'bin1 ${in} ${out}')
-n.cmd('cmd2', 'bin2 ${in} ${out}')
-n.cmd('cmd3', 'bin3 ${in} ${out}')
+n.cmd('cmd1', 'bin1', '${in} ${out}')
+n.cmd('cmd2', 'bin2', '${in} ${out}')
+n.cmd('cmd3', 'bin3', '${in} ${out}')
 
 a = src('a.txt')
 b = src('b.txt')
@@ -63,10 +63,11 @@ e = n.files(c, d).cmd3()
 
 ## Documentation
 
-### Reserved File Names
+### Reserved
 
-File names that are generated automatically by Ninju have `.ninju_` prefix and created in `$builddir`.
-So avoid using that prefix.
+- File names that are generated automatically by Ninju have `.ninju_` prefix and created in `$builddir`. So avoid using that prefix.
+- The `configure` command is reserved for generating ninja build file.
+- The ninja build file target (defaulted to `${root}/build.ninja`) is reserved
 
 ### Inputs
 
@@ -76,7 +77,7 @@ This is needed to provide build commands as attribute.
 ```python
 n = Ninju()
 src = n.dir('src')
-n.cmd('copy', 'cp ${in} ${out}')
+n.cmd('copy', 'cp', '${in} ${out}')
 
 # Correct
 a = src('a.txt')
@@ -95,7 +96,7 @@ Variables that are available in build commands is the same as in [Ninja](https:/
 
 ```python
 n = Ninju()
-n.cmd('copy', 'cp ${in} ${out}', description='Copy file')
+n.cmd('copy', 'cp', '${in} ${out}', description='Copy file')
 ```
 
 ### Files
@@ -112,7 +113,7 @@ Files object are path(s) specification that can be created using one of the foll
 ```python
 n = Ninju()
 src = n.dir('src')
-n.cmd('copy', 'cp ${in} ${out}')
+n.cmd('copy', 'cp', '${in} ${out}')
 
 # a, b, c, d, and e are all files object
 a = n.root('file.txt')
