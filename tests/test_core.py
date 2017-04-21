@@ -52,6 +52,14 @@ build ${builddir}/.ninju_1.tmp ${builddir}/.ninju_2.tmp: cmd1 $
 build one: phony ${root}/file2.txt
 build all: phony ${root}/file2.txt ${builddir}/.ninju_1.tmp $
     ${builddir}/.ninju_2.tmp
+""",
+
+    # 5
+    HEADER + """
+rule cmd1
+  command = bin1 ${in} ${out}
+  pool = console
+build target: cmd1
 """
 ]
 
@@ -102,3 +110,11 @@ class TestCore(unittest.TestCase):
         n.phony('all', n.files(a, b))
         result = generate_ninja(n, newline=False)
         self.assertEqual(result, expected[4])
+
+    def test_exec_cmd(self):
+        n = Ninju()
+        root = n.dir()
+        cmd1 = n.exec_cmd('cmd1', 'bin1 ${in} ${out}')
+        cmd1('target')
+        result = generate_ninja(n, newline=False)
+        self.assertEqual(result, expected[5])

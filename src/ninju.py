@@ -1,4 +1,5 @@
 import os
+import sys
 import inspect
 
 import ninja_syntax
@@ -7,6 +8,16 @@ from ninja_syntax import as_list
 NINJU_VERSION = '0.1.0'
 NINJU_URL = 'https://github.com/frm-adiputra/Ninju'
 NINJA_REQUIRED_VERSION = '1.7'
+
+
+class ConfigurationError(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
+
+
+class GeneratorError(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
 
 
 class _NVar(object):
@@ -30,11 +41,11 @@ class _NPool(object):
         writer.pool(self.name, self.depth)
 
 
-class _NRule(object):
+class _NBuildRule(object):
     def __init__(self, name, command, description=None, depfile=None,
                  generator=False, pool=None, restat=False, rspfile=None,
                  rspfile_content=None, deps=None):
-        super(_NRule, self).__init__()
+        super(_NBuildRule, self).__init__()
         self.name = name
         self.command = command
         self.description = description
@@ -78,6 +89,42 @@ class _NRule(object):
         return fn
 
 
+class _NExecRule(object):
+    def __init__(self, name, command, description=None,
+                 rspfile=None, rspfile_content=None):
+        super(_NExecRule, self).__init__()
+        self.name = name
+        self.command = command
+        self.description = description
+        self.rspfile = rspfile
+        self.rspfile_content = rspfile_content
+
+    def write(self, writer):
+        writer.rule(
+            self.name,
+            self.command,
+            self.description,
+            pool='console',
+            rspfile=self.rspfile,
+            rspfile_content=self.rspfile_content)
+
+    def exec_fn(self, ninju):
+        _self = self
+
+        def fn(target, inputs=None, variables=None):
+            if not _is_single_output(target):
+                raise ConfigurationError('exec_cmd can only have one target')
+            outs = _normalize_outputs(target, ninju._gen_name)
+            b = _NBuild(
+                outs,
+                _self.name,
+                inputs=inputs,
+                variables=variables)
+            ninju._seq.append(b)
+            return _Files(ninju, target)
+        return fn
+
+
 class _NBuild(object):
     def __init__(self, outputs, rule, inputs=None, implicit=None, order_only=None,
                  variables=None, implicit_outputs=None):
@@ -91,12 +138,16 @@ class _NBuild(object):
 
     def write(self, writer):
         outs = []
+        if not self.outputs:
+            raise GeneratorError('no output')
+
         for o in self.outputs:
             outs.append(str(o))
 
         ins = []
-        for o in self.inputs:
-            ins.append(str(o))
+        if self.inputs:
+            for o in self.inputs:
+                ins.append(str(o))
 
         writer.build(
             outs,
@@ -224,7 +275,7 @@ class Ninju(object):
     def cmd(self, name, command, description=None, depfile=None,
             generator=False, pool=None, restat=False, rspfile=None,
             rspfile_content=None, deps=None):
-        v = _NRule(
+        v = _NBuildRule(
             name,
             command,
             description=description,
@@ -238,8 +289,16 @@ class Ninju(object):
         self._seq.append(v)
         self._commands[name] = v.build_fn(self)
 
-    def exec_cmd(self):
-        pass
+    def exec_cmd(self, name, command, description=None,
+                 rspfile=None, rspfile_content=None):
+        v = _NExecRule(
+            name,
+            command,
+            description=description,
+            rspfile=rspfile,
+            rspfile_content=rspfile_content)
+        self._seq.append(v)
+        return v.exec_fn(self)
 
     def phony(self, name, inputs):
         self._seq.append(_NPhony(name, inputs))
@@ -283,3 +342,8 @@ def _normalize_outputs(outputs, gen_name, ext='tmp'):
         return outputs
     else:
         return as_list(outputs)
+
+
+def _is_single_output(t):
+    return not ((type(t) == _Files and len(t.files) != 1)
+                or ((isinstance(t, list) or isinstance(t, tuple)) and len(t) != 1))
