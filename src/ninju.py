@@ -8,6 +8,7 @@ NINJU_VERSION = '0.1.0'
 NINJU_URL = 'https://github.com/frm-adiputra/Ninju'
 NINJA_REQUIRED_VERSION = '1.7'
 
+
 class _NVar(object):
     def __init__(self, name, value, indent=0):
         super(_NVar, self).__init__()
@@ -18,6 +19,7 @@ class _NVar(object):
     def write(self, writer):
         writer.variable(self.name, self.value, self.indent)
 
+
 class _NPool(object):
     def __init__(self, name, depth):
         super(_NPool, self).__init__()
@@ -27,10 +29,11 @@ class _NPool(object):
     def write(self, writer):
         writer.pool(self.name, self.depth)
 
+
 class _NRule(object):
     def __init__(self, name, command, description=None, depfile=None,
-             generator=False, pool=None, restat=False, rspfile=None,
-             rspfile_content=None, deps=None):
+                 generator=False, pool=None, restat=False, rspfile=None,
+                 rspfile_content=None, deps=None):
         super(_NRule, self).__init__()
         self.name = name
         self.command = command
@@ -58,24 +61,26 @@ class _NRule(object):
 
     def build_fn(self, ninju):
         _self = self
+
         def fn(inputs, outputs=None, implicit=None, order_only=None,
                 variables=None, implicit_outputs=None):
             outs = _normalize_outputs(outputs, ninju._gen_name)
             b = _NBuild(
-                    outs,
-                    _self.name,
-                    inputs=inputs,
-                    implicit=implicit,
-                    order_only=order_only,
-                    variables=variables,
-                    implicit_outputs=implicit_outputs)
+                outs,
+                _self.name,
+                inputs=inputs,
+                implicit=implicit,
+                order_only=order_only,
+                variables=variables,
+                implicit_outputs=implicit_outputs)
             ninju._seq.append(b)
             return _Files(ninju, *outs)
         return fn
 
+
 class _NBuild(object):
     def __init__(self, outputs, rule, inputs=None, implicit=None, order_only=None,
-            variables=None, implicit_outputs=None):
+                 variables=None, implicit_outputs=None):
         self.outputs = outputs
         self.rule = rule
         self.inputs = inputs
@@ -102,6 +107,7 @@ class _NBuild(object):
             variables=self.variables,
             implicit_outputs=self.implicit_outputs)
 
+
 class _NPhony(object):
     def __init__(self, name, inputs):
         super(_NPhony, self).__init__()
@@ -114,6 +120,7 @@ class _NPhony(object):
             ins.append(str(o))
 
         writer.build(self.name, 'phony', inputs=ins)
+
 
 class _Files(object):
     def __init__(self, ninju, *files):
@@ -135,10 +142,11 @@ class _Files(object):
         if name in self._n._commands:
             cmd = self._n._commands[name]
             p = self.files
+
             def fn(outputs=None, implicit=None, order_only=None,
                     variables=None, implicit_outputs=None):
                 return cmd(p, outputs=outputs, implicit=implicit, order_only=order_only,
-                        variables=variables, implicit_outputs=implicit_outputs)
+                           variables=variables, implicit_outputs=implicit_outputs)
             return fn
         else:
             raise AttributeError
@@ -160,6 +168,7 @@ class _Files(object):
 
     def __next__(self):
         return self.files.__next__()
+
 
 class Ninju(object):
     def __init__(self, build_file='build.ninja', build_dir='.builddir'):
@@ -184,6 +193,7 @@ class Ninju(object):
     """returns a directory function.
     If var is specified it also create a new variable.
     """
+
     def dir(self, *args, var=None):
         if len(args) == 0:
             p = '${root}'
@@ -195,6 +205,7 @@ class Ninju(object):
             p = v
 
         _self = self
+
         def dirfn(*args):
             return _Files(_self, os.path.join(p, *args))
         return dirfn
@@ -211,19 +222,19 @@ class Ninju(object):
         return "${" + key + "}"
 
     def cmd(self, name, command, description=None, depfile=None,
-             generator=False, pool=None, restat=False, rspfile=None,
-             rspfile_content=None, deps=None):
+            generator=False, pool=None, restat=False, rspfile=None,
+            rspfile_content=None, deps=None):
         v = _NRule(
-                    name,
-                    command,
-                    description=description,
-                    depfile=depfile,
-                    generator=generator,
-                    pool=pool,
-                    restat=restat,
-                    rspfile=rspfile,
-                    rspfile_content=rspfile_content,
-                    deps=deps)
+            name,
+            command,
+            description=description,
+            depfile=depfile,
+            generator=generator,
+            pool=pool,
+            restat=restat,
+            rspfile=rspfile,
+            rspfile_content=rspfile_content,
+            deps=deps)
         self._seq.append(v)
         self._commands[name] = v.build_fn(self)
 
@@ -247,7 +258,8 @@ class Ninju(object):
 
     def _generate(self, output, newline=True):
         writer = ninja_syntax.Writer(output)
-        writer.comment('This file is generated by Ninju v{} ({})'.format(NINJU_VERSION, NINJU_URL))
+        writer.comment('This file is generated by Ninju v{} ({})'.format(
+            NINJU_VERSION, NINJU_URL))
         writer.newline()
 
         for task in self._seq:
@@ -255,6 +267,7 @@ class Ninju(object):
             if newline:
                 writer.newline()
         return writer
+
 
 def _normalize_outputs(outputs, gen_name, ext='tmp'):
     if not outputs:

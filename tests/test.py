@@ -4,10 +4,11 @@ from test_use_cases import TestUseCases
 
 
 def suite():
-  suite = unittest.TestSuite()
-  suite.addTest(TestCore())
-  suite.addTest(TestUseCases())
-  return suite
+    suite = unittest.TestSuite()
+    suite.addTest(TestCore())
+    suite.addTest(TestUseCases())
+    return suite
+
 
 if __name__ == '__main__':
-  unittest.main()
+    unittest.main()
