@@ -40,6 +40,18 @@ rule copy
   description = copy file
 build ${root}/tmp/file2.txt: copy ${root}/file1.txt
 build ${root}/file3.txt: copy ${root}/tmp/file2.txt
+""",
+
+# 4
+HEADER + """
+rule cmd1
+  command = bin1 ${in} ${out}
+build ${root}/file2.txt: cmd1 ${root}/file1.txt
+build ${builddir}/.ninju_1.tmp ${builddir}/.ninju_2.tmp: cmd1 $
+    ${root}/file3.txt
+build one: phony ${root}/file2.txt
+build all: phony ${root}/file2.txt ${builddir}/.ninju_1.tmp $
+    ${builddir}/.ninju_2.tmp
 """
 ]
 
@@ -78,3 +90,14 @@ class TestCore(unittest.TestCase):
     a.copy(os.path.join('${root}', 'file3.txt'))
     result = generate_ninja(n, newline=False)
     self.assertEqual(result, expected[3])
+
+  def test_phony(self):
+    n = Ninju()
+    root = n.dir()
+    n.cmd('cmd1', 'bin1 ${in} ${out}')
+    a = root('file1.txt').cmd1(root('file2.txt'))
+    b = root('file3.txt').cmd1(outputs=2)
+    n.phony('one', a)
+    n.phony('all', n.files(a, b))
+    result = generate_ninja(n, newline=False)
+    self.assertEqual(result, expected[4])

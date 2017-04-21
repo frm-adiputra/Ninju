@@ -102,8 +102,20 @@ class _NBuild(object):
             variables=self.variables,
             implicit_outputs=self.implicit_outputs)
 
-class _Files(object):
+class _NPhony(object):
+    def __init__(self, name, inputs):
+        super(_NPhony, self).__init__()
+        self.name = name
+        self.inputs = inputs
 
+    def write(self, writer):
+        ins = []
+        for o in self.inputs:
+            ins.append(str(o))
+
+        writer.build(self.name, 'phony', inputs=ins)
+
+class _Files(object):
     def __init__(self, ninju, *files):
         super(_Files, self).__init__()
         self.files = []
@@ -150,8 +162,6 @@ class _Files(object):
         return self.files.__next__()
 
 class Ninju(object):
-
-    """docstring for Ninju."""
     def __init__(self, build_file='build.ninja', build_dir='.builddir'):
         super(Ninju, self).__init__()
         self._build_file = build_file
@@ -219,6 +229,9 @@ class Ninju(object):
 
     def exec_cmd(self):
         pass
+
+    def phony(self, name, inputs):
+        self._seq.append(_NPhony(name, inputs))
 
     def _gen_name(self, ext='tmp'):
         self._name_count += 1
