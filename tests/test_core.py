@@ -114,7 +114,7 @@ class TestCore(unittest.TestCase):
     def test_exec_cmd(self):
         n = Ninju()
         root = n.dir()
-        cmd1 = n.exec_cmd('cmd1', 'bin1 ${in} ${out}')
-        cmd1('target')
+        n.exec_cmd('cmd1', 'bin1 ${in} ${out}')
+        n.target('target').cmd1()
         result = generate_ninja(n, newline=False)
         self.assertEqual(result, expected[5])

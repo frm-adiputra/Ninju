@@ -173,9 +173,31 @@ class _NPhony(object):
         writer.build(self.name, 'phony', inputs=ins)
 
 
+class _Target(object):
+    def __init__(self, ninju, target):
+        super(_Target, self).__init__()
+        self._n = ninju
+        self.target = target
+
+    def __getattr__(self, name):
+        if name in self._n._exec_cmds:
+            cmd = self._n._exec_cmds[name]
+            t = self.target
+
+            def fn(inputs=None, variables=None):
+                return cmd(t, inputs=inputs, variables=variables)
+            return fn
+        else:
+            raise AttributeError
+
+    def phony(self):
+        pass
+
+
 class _Files(object):
     def __init__(self, ninju, *files):
         super(_Files, self).__init__()
+        self._n = ninju
         self.files = []
         for f in files:
             if type(f) == _Files:
@@ -187,11 +209,10 @@ class _Files(object):
             else:
                 self.files.append(f)
 
-        self._n = ninju
 
     def __getattr__(self, name):
-        if name in self._n._commands:
-            cmd = self._n._commands[name]
+        if name in self._n._cmds:
+            cmd = self._n._cmds[name]
             p = self.files
 
             def fn(outputs=None, implicit=None, order_only=None,
@@ -228,7 +249,8 @@ class Ninju(object):
         self._build_dir = build_dir
         self._seq = []
         self._name_count = 0
-        self._commands = {}
+        self._cmds = {}
+        self._exec_cmds = {}
 
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
@@ -287,7 +309,7 @@ class Ninju(object):
             rspfile_content=rspfile_content,
             deps=deps)
         self._seq.append(v)
-        self._commands[name] = v.build_fn(self)
+        self._cmds[name] = v.build_fn(self)
 
     def exec_cmd(self, name, command, description=None,
                  rspfile=None, rspfile_content=None):
@@ -298,7 +320,7 @@ class Ninju(object):
             rspfile=rspfile,
             rspfile_content=rspfile_content)
         self._seq.append(v)
-        return v.exec_fn(self)
+        self._exec_cmds[name] = v.exec_fn(self)
 
     def phony(self, name, inputs):
         self._seq.append(_NPhony(name, inputs))
@@ -314,6 +336,9 @@ class Ninju(object):
 
     def files(self, *args):
         return _Files(self, *args)
+
+    def target(self, target):
+        return _Target(self, target)
 
     def _generate(self, output, newline=True):
         writer = ninja_syntax.Writer(output)
