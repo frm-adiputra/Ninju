@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 from io import StringIO
-from helper import generate_ninja
+from helper import generate_ninja, HEADER
 
 sourcedir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(sourcedir, '../src'))
@@ -12,19 +12,19 @@ from ninju import Ninju
 
 expected = [
 # 0
-"""root = .
+HEADER + """
 myvar = myvalue
 """,
 
 # 1
-"""root = .
+HEADER + """
 rule echo
   command = /usr/bin/echo
   description = echo test
 """,
 
 # 2
-"""root = .
+HEADER + """
 dst = ${root}/dst/dir1
 rule copy
   command = /usr/bin/cp ${in} ${out}
@@ -34,7 +34,7 @@ build ${dst}/file4.txt: copy ${root}/file3.txt
 """,
 
 # 3
-"""root = .
+HEADER + """
 rule copy
   command = /usr/bin/cp ${in} ${out}
   description = copy file
@@ -42,6 +42,7 @@ build ${root}/tmp/file2.txt: copy ${root}/file1.txt
 build ${root}/file3.txt: copy ${root}/tmp/file2.txt
 """
 ]
+
 class TestCore(unittest.TestCase):
 
   def test_var(self):

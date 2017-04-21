@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 from io import StringIO
-from helper import generate_ninja
+from helper import generate_ninja, HEADER
 
 sourcedir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(sourcedir, '../src'))
@@ -12,7 +12,7 @@ from ninju import Ninju
 
 expected = [
 # 0
-"""root = .
+HEADER + """
 rule cmd1
   command = bin1 ${in} ${out}
 rule cmd2
@@ -25,7 +25,7 @@ build ${builddir}/b.txt: cmd3 ${builddir}/.ninju_2.tmp
 """,
 
 # 1
-"""root = .
+HEADER + """
 rule cmd1
   command = bin1 ${in} ${out}
 rule cmd2
@@ -39,7 +39,7 @@ build ${builddir}/.ninju_3.tmp: cmd3 ${builddir}/.ninju_1.tmp $
 """,
 
 # 2
-"""root = .
+HEADER + """
 rule cmd1
   command = bin1 ${in} ${out}
 rule cmd2
@@ -50,6 +50,7 @@ build ${builddir}/.ninju_3.tmp: cmd2 ${builddir}/.ninju_1.tmp $
     ${builddir}/.ninju_2.tmp
 """
 ]
+
 class TestUseCases(unittest.TestCase):
 
   def test_pipeline(self):
