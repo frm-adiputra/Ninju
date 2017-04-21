@@ -11,6 +11,9 @@ class _NVar(object):
         self.value = value
         self.indent = indent
 
+    def write(self, writer):
+        writer.variable(self.name, self.value, self.indent)
+
 class _NPool(object):
     def __init__(self, name, depth):
         super(_NPool, self).__init__()
@@ -144,17 +147,33 @@ class Ninju(object):
         else:
             self._root_dir = os.path.dirname(os.path.abspath(module.__file__))
 
-    def dir(self, *args):
-        p = os.path.join('${NINJU_ROOT}', *args)
+        self.var('root', '.')
+
+    """returns a directory function.
+    If var is specified it also create a new variable.
+    """
+    def dir(self, *args, var=None):
+        if len(args) == 0:
+            p = '${root}'
+        else:
+            p = os.path.join('${root}', *args)
+
+        if var:
+            v = self.var(var, p)
+            p = v
+
         _self = self
         def dirfn(*args):
             return O(os.path.join(p, *args), _self)
         return dirfn
 
+    def root(self):
+        return self.dir()
+
     def var(self, key, value):
         v = _NVar(key, value)
         self._seq.append(v)
-        return v
+        return "${" + key + "}"
 
     def cmd(self, name, command, description=None, depfile=None,
              generator=False, pool=None, restat=False, rspfile=None,
@@ -181,12 +200,17 @@ class Ninju(object):
         return 'ninju_{suffix}_{index}'.format(suffix=suffix, index=self._name_count)
 
     def generate(self, newline=True):
-        writer = ninja_syntax.Writer(open(os.path.join(self._root_dir, self._build_file), 'w'))
+        output = open(os.path.join(self._root_dir, self._build_file), 'w')
+        w = self._generate(output, newline)
+        w.close()
+
+    def _generate(self, output, newline=True):
+        writer = ninja_syntax.Writer(output)
         for task in self._seq:
             task.write(writer)
             if newline:
                 writer.newline()
-        writer.close()
+        return writer
 
 def _normalize_outputs(outputs, gen_name, suffix):
     if not outputs:
