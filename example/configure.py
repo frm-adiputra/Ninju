@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import sys
 
@@ -14,16 +16,18 @@ data_panitia_PTN1 = n.dir('data', 'DataPendaftaran')
 data_panitia_PTN2 = n.dir('data', 'DataPendaftaranPTN2')
 
 n.cmd('convert_data_panitia',
-      '${scriptdir}/convert-data-panitia.sh ${in} ${out} ${dlm}',
+      '${scriptdir}/convert-data-panitia.sh',
+    #   '${in} ${out} ${dlm}',
       description='Convert CSV from Panitia ${in}'
       )
 
 n.cmd('union_data',
-      '${scriptdir}/union-data.sh ${in} ${out}',
+      '${scriptdir}/union-data.sh',
+      '${in} ${out}',
       description='Combine data ${in}'
       )
 
-n.exec_cmd('mycmd', 'cmd ${in}')
+n.exec_cmd('mycmd', 'cmd', '${in}')
 n.target('xxx').mycmd()
 n.target('yyy').phony(n.files('a.txt'))
 
@@ -42,5 +46,5 @@ for v in arr:
     c = n.files(a, b).union_data(tmp(v[1]))
     unions.append(c)
 
-n.default('xxx', n.files('a.txt'))
+n.default('xxx', n.files('a.txt', None))
 n.generate()

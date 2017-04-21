@@ -7,8 +7,17 @@ root = .
 
 builddir = ${root}/.builddir
 
+rule configure
+  command = /media/firman/Sync/Sync/Work/Ninju/example/configure.py
+  description = Regenerate ninja build file
+  generator = 1
+
+build ${root}/build.ninja: configure | $
+    /media/firman/Sync/Sync/Work/Ninju/src/ninju.py $
+    /media/firman/Sync/Sync/Work/Ninju/src/ninja_syntax.py
+
 rule convert_data_panitia
-  command = ${scriptdir}/convert-data-panitia.sh ${in} ${out} ${dlm}
+  command = ${scriptdir}/convert-data-panitia.sh
   description = Convert CSV from Panitia ${in}
 
 rule union_data
