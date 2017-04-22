@@ -2,6 +2,8 @@
 
 Ninju is a ninja build files generator.
 
+This is a WIP (work in progress) project.
+
 ## Getting Started
 
 Ninju provides a simple way to generate ninja build files.
@@ -126,3 +128,41 @@ e = d.copy('${root}/file3.txt')
 ### Provided Variables
 
 - `$root`: the root directory where the taskfile located
+
+## API
+
+### `Ninju`
+
+#### `cmd()`
+
+Parameter | Type | Default | Description
+----------|------|---------|------------
+`name*` | `string` |  |
+`executable*` | `string` |  |
+`args` | `string` |  |
+`description` | `string` |  |
+`depfile` | `string` |  |
+`generator` | `bool` | `False` |
+`pool` | `"console",1,2,...` |  |
+`restat` | `bool` | `False` |
+`rspfile` | `string` |  |
+`rspfile_content` | `string` |  |
+`deps` | `"gcc","msvc"` |  |
+
+### `Target`
+
+A `Target` is created using `Ninju.target()`.
+`Target` have the following methods.
+
+#### Method `<exec_cmd_name>`
+
+Parameter | Type | Default | Description
+----------|------|---------|------------
+`inputs` | `Files` |  |
+`variables` | `dict` |  |
+
+#### Method `phony`
+
+Parameter | Type | Default | Description
+----------|------|---------|------------
+`inputs*` | `Files` |  |
