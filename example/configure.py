@@ -12,6 +12,7 @@ n = Ninju()
 
 # all directories are relative to $ROOT
 tmp = n.dir('tmp')
+scriptdir = n.dir('scripts', var='scriptdir')
 data_panitia_PTN1 = n.dir('data', 'DataPendaftaran')
 data_panitia_PTN2 = n.dir('data', 'DataPendaftaranPTN2')
 

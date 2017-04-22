@@ -13,8 +13,11 @@ rule configure
   generator = 1
 
 build ${root}/build.ninja: configure | $
+    /media/firman/Sync/Sync/Work/Ninju/example/configure.py $
     /media/firman/Sync/Sync/Work/Ninju/src/ninju.py $
     /media/firman/Sync/Sync/Work/Ninju/src/ninja_syntax.py
+
+scriptdir = ${root}/scripts
 
 rule convert_data_panitia
   command = ${scriptdir}/convert-data-panitia.sh
@@ -33,49 +36,59 @@ build xxx: mycmd
 build yyy: phony a.txt
 
 build ${builddir}/.ninju_1.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaran/Data_Sekolah.csv
+    ${root}/data/DataPendaftaran/Data_Sekolah.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${builddir}/.ninju_2.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaranPTN2/Data_Sekolah.csv
+    ${root}/data/DataPendaftaranPTN2/Data_Sekolah.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${root}/tmp/csv_sekolah.csv: union_data ${builddir}/.ninju_1.tmp $
-    ${builddir}/.ninju_2.tmp
+    ${builddir}/.ninju_2.tmp | ${scriptdir}/union-data.sh
 
 build ${builddir}/.ninju_3.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaran/Data_Siswa.csv
+    ${root}/data/DataPendaftaran/Data_Siswa.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${builddir}/.ninju_4.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaranPTN2/Data_Siswa.csv
+    ${root}/data/DataPendaftaranPTN2/Data_Siswa.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${root}/tmp/csv_siswa.csv: union_data ${builddir}/.ninju_3.tmp $
-    ${builddir}/.ninju_4.tmp
+    ${builddir}/.ninju_4.tmp | ${scriptdir}/union-data.sh
 
 build ${builddir}/.ninju_5.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaran/Data_Pilihan.csv
+    ${root}/data/DataPendaftaran/Data_Pilihan.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${builddir}/.ninju_6.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaranPTN2/Data_Pilihan.csv
+    ${root}/data/DataPendaftaranPTN2/Data_Pilihan.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${root}/tmp/csv_pilihan.csv: union_data ${builddir}/.ninju_5.tmp $
-    ${builddir}/.ninju_6.tmp
+    ${builddir}/.ninju_6.tmp | ${scriptdir}/union-data.sh
 
 build ${builddir}/.ninju_7.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaran/Data_Jurusan.csv
+    ${root}/data/DataPendaftaran/Data_Jurusan.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${builddir}/.ninju_8.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaranPTN2/Data_Jurusan.csv
+    ${root}/data/DataPendaftaranPTN2/Data_Jurusan.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${root}/tmp/csv_jurusan.csv: union_data ${builddir}/.ninju_7.tmp $
-    ${builddir}/.ninju_8.tmp
+    ${builddir}/.ninju_8.tmp | ${scriptdir}/union-data.sh
 
 build ${builddir}/.ninju_9.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaran/Ref_Jurusan.csv
+    ${root}/data/DataPendaftaran/Ref_Jurusan.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${builddir}/.ninju_10.tmp: convert_data_panitia $
-    ${root}/data/DataPendaftaranPTN2/Ref_Jurusan.csv
+    ${root}/data/DataPendaftaranPTN2/Ref_Jurusan.csv | $
+    ${scriptdir}/convert-data-panitia.sh
 
 build ${root}/tmp/csv_ref_jurusan.csv: union_data ${builddir}/.ninju_9.tmp $
-    ${builddir}/.ninju_10.tmp
+    ${builddir}/.ninju_10.tmp | ${scriptdir}/union-data.sh
 
 default xxx a.txt
 
