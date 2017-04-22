@@ -245,20 +245,7 @@ class _Files(object):
     def __init__(self, ninju, *files):
         super(_Files, self).__init__()
         self._n = ninju
-        self.files = []
-        for f in files:
-            if f == None:
-                continue
-            elif type(f) == _Files:
-                self.files.extend(f.files)
-            elif type(f) == _Target:
-                self.files.append(f.target)
-            elif isinstance(f, list):
-                self.files.extend(f)
-            elif isinstance(f, tuple):
-                self.files.extend(f)
-            else:
-                self.files.append(f)
+        self.files = _flatten(files)
 
     def __getattr__(self, name):
         if name in self._n._cmds:
@@ -500,3 +487,33 @@ def _as_string_list(t):
     for o in t:
         l.append(str(o))
     return l
+
+
+def _flatten(l):
+    if l == None:
+        return []
+
+    if not (isinstance(l, list) or isinstance(l, tuple) or type(l) == _Files):
+        return [l]
+
+    if type(l) == _Files:
+        l0 = l.files
+    else:
+        l0 = l
+
+    return _flatten_list(l0)
+
+
+def _flatten_list(l):
+    result = []
+    for v in l:
+        if not (isinstance(v, list) or isinstance(v, tuple) or type(v) == _Files):
+            result.append(v)
+            continue
+
+        if type(v) == _Files:
+            l0 = v.files
+        else:
+            l0 = v
+        result.extend(_flatten_list(l0))
+    return result
