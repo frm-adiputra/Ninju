@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 import warnings
+from string import Template
 
 import ninja_syntax
 from ninja_syntax import as_list
@@ -71,17 +72,12 @@ class _NBuildRule(object):
         self.rspfile = rspfile
         self.rspfile_content = rspfile_content
         self.deps = deps
-        self.executable_path = shutil.which(executable)
-        if self.executable_path == None:
-            warnings.warn('executable not found: {}'.format(executable),
-                          NinjuWarning, stacklevel=3)
-            self.executable_path = executable
 
     def write(self, writer):
         if self.args != None:
-            command = ' '.join([self.executable_path, self.args])
+            command = ' '.join([self.executable, self.args])
         else:
-            command = self.executable_path
+            command = self.executable
 
         writer.rule(
             self.name,
@@ -105,7 +101,7 @@ class _NBuildRule(object):
                 outs,
                 _self.name,
                 inputs=inputs,
-                implicit=ninju.files(_self.executable_path, implicit),
+                implicit=ninju.files(_self.executable, implicit),
                 order_only=order_only,
                 variables=variables,
                 implicit_outputs=implicit_outputs)
@@ -124,17 +120,12 @@ class _NExecRule(object):
         self.description = description
         self.rspfile = rspfile
         self.rspfile_content = rspfile_content
-        self.executable_path = shutil.which(executable)
-        if self.executable_path == None:
-            warnings.warn('executable not found: {}'.format(executable),
-                          NinjuWarning, stacklevel=3)
-            self.executable_path = executable
 
     def write(self, writer):
         if self.args != None:
-            command = ' '.join([self.executable_path, self.args])
+            command = ' '.join([self.executable, self.args])
         else:
-            command = self.executable_path
+            command = self.executable
 
         writer.rule(
             self.name,
@@ -148,7 +139,7 @@ class _NExecRule(object):
         _self = self
 
         def fn(target, inputs=None, variables=None):
-            if not _is_single_output(target):
+            if not _is_single_item(target):
                 raise ConfigurationError('exec_cmd can only have one target')
             outs = _normalize_outputs(target, ninju._gen_name)
             b = _NBuild(
@@ -179,11 +170,6 @@ class _NBuild(object):
 
         for o in self.outputs:
             outs.append(str(o))
-
-        # ins = []
-        # if self.inputs:
-        #     for o in self.inputs:
-        #         ins.append(str(o))
 
         writer.build(
             outs,
@@ -320,6 +306,7 @@ class Ninju(object):
         self._cmds = {}
         self._exec_cmds = {}
         self._pools = {}
+        self._vars = {}
 
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
@@ -370,15 +357,22 @@ class Ninju(object):
     def var(self, key, value):
         v = _NVar(key, value)
         self._seq.append(v)
+        self._vars[key] = value
         return "${" + key + "}"
 
     def cmd(self, name, executable, args=None, description=None, depfile=None,
             generator=False, pool=None, restat=False, rspfile=None,
             rspfile_content=None, deps=None):
+        r = self._find_exe(executable)
+        exe = r[1]
+        if not r[0]:
+            warnings.warn('executable not found: {}'.format(exe),
+                          NinjuWarning, stacklevel=2)
+
         pool_name = self._setup_pool(pool)
         v = _NBuildRule(
             name,
-            executable,
+            exe,
             args=args,
             description=description,
             depfile=depfile,
@@ -393,9 +387,15 @@ class Ninju(object):
 
     def exec_cmd(self, name, executable, args=None, description=None,
                  rspfile=None, rspfile_content=None):
+        r = self._find_exe(executable)
+        exe = r[1]
+        if not r[0]:
+            warnings.warn('executable not found: {}'.format(exe),
+                          NinjuWarning, stacklevel=2)
+
         v = _NExecRule(
             name,
-            executable,
+            exe,
             args=args,
             description=description,
             rspfile=rspfile,
@@ -421,6 +421,23 @@ class Ninju(object):
     def default(self, *targets):
         v = _NDefault(self.files(*targets))
         self._seq.append(v)
+
+    def _find_exe(self, path):
+        ff = self.files(path)
+        if len(ff.files) != 1:
+            raise ConfigurationError('Only one executable required')
+
+        fpath = ff.files[0]
+        fp = Template(str(fpath)).substitute(self._vars)
+        if os.path.isfile(fp) and os.access(fp, os.X_OK):
+            return (True, fpath)
+        try:
+            p = shutil.which(fp)
+            if p == None:
+                return (False, fpath)
+            return (True, p)
+        except Exception:
+            return (False, fpath)
 
     def _setup_pool(self, pool):
         if pool == None:
@@ -471,7 +488,7 @@ def _normalize_outputs(outputs, gen_name, ext='tmp'):
         return as_list(outputs)
 
 
-def _is_single_output(t):
+def _is_single_item(t):
     return not ((type(t) == _Files and len(t.files) != 1)
                 or ((isinstance(t, list) or isinstance(t, tuple)) and len(t) != 1))
 
