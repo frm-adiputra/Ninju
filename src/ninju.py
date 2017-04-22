@@ -227,6 +227,7 @@ class _Target(object):
 
     def phony(self, inputs):
         self._n._seq.append(_NPhony(self.target, self._n.files(inputs)))
+        return self
 
     def __repr__(self):
         return self.target.__repr__()
