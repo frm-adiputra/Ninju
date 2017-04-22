@@ -344,7 +344,8 @@ class Ninju(object):
     def var(self, key, value):
         v = _NVar(key, value)
         self._seq.append(v)
-        self._vars[key] = value
+        expval = Template(value).substitute(self._vars)
+        self._vars[key] = expval
         return "${" + key + "}"
 
     def cmd(self, name, executable, args=None, description=None, depfile=None,
@@ -508,7 +509,8 @@ def _flatten_list(l):
     result = []
     for v in l:
         if not (isinstance(v, list) or isinstance(v, tuple) or type(v) == _Files):
-            result.append(v)
+            if v != None:
+                result.append(v)
             continue
 
         if type(v) == _Files:
