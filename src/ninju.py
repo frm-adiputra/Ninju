@@ -284,7 +284,7 @@ class Ninju(object):
     cwd_check is used only in test to bypass CWD check.
     """
 
-    def __init__(self, build_file='build.ninja', build_dir='.builddir', no_cwd_check=False):
+    def __init__(self, build_file='build.ninja', build_dir='.builddir', generators=[], no_cwd_check=False):
         super(Ninju, self).__init__()
         self._build_file = build_file
         self._build_dir = build_dir
@@ -310,10 +310,15 @@ class Ninju(object):
         self.cmd('configure', self._file,
                  description='Regenerate ninja build file',
                  generator=True)
-        self.files().configure(self.root(self._build_file),
-                               implicit=[
+
+        gens = [
             NINJU_MODULE_PATH,
-            NINJA_SYNTAX_MODULE_PATH])
+            NINJA_SYNTAX_MODULE_PATH]
+        for g in generators:
+            gens.append(g.__file__)
+
+        self.files().configure(self.root(self._build_file),
+                               implicit=gens)
 
     """returns a directory function.
     If var is specified it also create a new variable.
