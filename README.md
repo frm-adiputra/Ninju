@@ -1,4 +1,6 @@
 # Ninju
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffrm-adiputra%2FNinju.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffrm-adiputra%2FNinju?ref=badge_shield)
+
 
 Ninju is a ninja build files generator.
 
@@ -166,3 +168,7 @@ Parameter | Type | Default | Description
 Parameter | Type | Default | Description
 ----------|------|---------|------------
 `inputs*` | `Files` |  |
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ffrm-adiputra%2FNinju.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ffrm-adiputra%2FNinju?ref=badge_large)
